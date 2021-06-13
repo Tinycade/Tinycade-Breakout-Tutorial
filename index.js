@@ -1,3 +1,5 @@
+const Beholder = window['beholder-detection'];
+
 let score = 0;
 let lives = 3;
 
@@ -40,23 +42,23 @@ function keyUpHandler(e) {
 }
 
 function mouseMoveHandler(e) {
-  var relativeX = e.clientX - canvas.offsetLeft;
+  let relativeX = e.clientX - canvas.offsetLeft;
   if(relativeX > 0 && relativeX < canvas.width) {
     paddleX = relativeX - paddleWidth/2;
   }
 }
 function collisionDetection() {
-  for(var c=0; c<brickColumnCount; c++) {
-    for(var r=0; r<brickRowCount; r++) {
-      var b = bricks[c][r];
+  for(let c=0; c<brickColumnCount; c++) {
+    for(let r=0; r<brickRowCount; r++) {
+      let b = bricks[c][r];
       if(b.status == 1) {
         if(x > b.x && x < b.x+brickWidth && y > b.y && y < b.y+brickHeight) {
           dy = -dy;
           b.status = 0;
           score++;
           if(score == brickRowCount*brickColumnCount) {
-            alert("YOU WIN, CONGRATS!");
-            document.location.reload();
+            // alert("YOU WIN, CONGRATS!");
+            // document.location.reload();
           }
         }
       }
@@ -79,11 +81,11 @@ function drawPaddle() {
   ctx.closePath();
 }
 function drawBricks() {
-  for(var c=0; c<brickColumnCount; c++) {
-    for(var r=0; r<brickRowCount; r++) {
+  for(let c=0; c<brickColumnCount; c++) {
+    for(let r=0; r<brickRowCount; r++) {
       if(bricks[c][r].status == 1) {
-        var brickX = (r*(brickWidth+brickPadding))+brickOffsetLeft;
-        var brickY = (c*(brickHeight+brickPadding))+brickOffsetTop;
+        let brickX = (r*(brickWidth+brickPadding))+brickOffsetLeft;
+        let brickY = (c*(brickHeight+brickPadding))+brickOffsetTop;
         bricks[c][r].x = brickX;
         bricks[c][r].y = brickY;
         ctx.beginPath();
@@ -106,7 +108,14 @@ function drawLives() {
   ctx.fillText("Lives: "+lives, canvas.width-65, 20);
 }
 
+function lerp(a, b, c, d, t) {
+  return (t - a) / (b - a) * (d - c);
+}
+
 function update() {
+  Beholder.update();
+  //console.log(Beholder.getMarker(0).center.x); // 194 - 268
+  paddleX = lerp(194, 268, 0, canvas.width, Beholder.getMarker(0).center.x) - paddleWidth / 2;
   collisionDetection();
 
   if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) {
@@ -122,8 +131,8 @@ function update() {
     else {
       lives--;
       if(!lives) {
-        alert("GAME OVER");
-        document.location.reload();
+        // alert("GAME OVER");
+        // document.location.reload();
       }
       else {
         x = canvas.width/2;
@@ -165,6 +174,8 @@ function init() {
   document.addEventListener("keyup", keyUpHandler, false);
   document.addEventListener("mousemove", mouseMoveHandler, false);
 
+  Beholder.init('#beholder-root', { overlay_params: { present: true }, feed_params: { brightness: 0 }, camera_params: { rearCamera: true, torch: true, videoSize: 0 } });
+
   canvas = document.getElementById("game-canvas");
   ctx = canvas.getContext("2d");
   x = canvas.width/2;
@@ -176,13 +187,14 @@ function init() {
     hasStarted = true;
   }, false);
 
-  for(var c=0; c<brickColumnCount; c++) {
+  for(let c=0; c<brickColumnCount; c++) {
     bricks[c] = [];
-    for(var r=0; r<brickRowCount; r++) {
+    for(let r=0; r<brickRowCount; r++) {
       bricks[c][r] = { x: 0, y: 0, status: 1 };
     }
   }
 
+  requestAnimationFrame(update);
 }
 
 window.onload = init;
