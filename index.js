@@ -183,6 +183,7 @@ function init() {
     }
   }
 
+  update();
 }
 
 window.onload = init;
