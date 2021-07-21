@@ -5,18 +5,22 @@ class Gun {
         this.radY = radY;
         this.fwd = Vec2.fromAngle(rotation);
         this.speed = speed;
+        // this.delay = 3000;
+        // this.interval = this.setInterval(this.shoot, this.delay);
     }
 
     update(dt) {
         // this moves the gun
         // this.position.addScalar(this.fwd, this.speed * dt);
+        //setTimeout(this.shoot(), 3000);
     }
 
     shoot() {
         bullets.push(
             new Bullet(
                 this.position.clone(),
-                this.fwd.clone()
+                this.fwd.clone(),
+                0 //0 is a player bullet
             )
         );
     }

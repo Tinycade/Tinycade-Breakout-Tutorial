@@ -11,9 +11,9 @@ class Enemy {
         move();
     }
 
-    move(){
-        var dx = this.position.x - playerX;
-        var dy = this.position.y - playerY;
+    move(dt){
+        var dx = this.position.x - player.position.x;
+        var dy = this.position.y - player.position.y;
         // var dy = this.position.x - waypoints[this.waypointIndex].position.y;
 
 

@@ -1,24 +1,23 @@
 const Beholder = window['beholder-detection'];
 
-//player stuff (put into class)
-let playerX = 100;
-let playerY = 100;
-let playerRadius = 20;
-let playerSpeed = 10;
-let playerRotation = 0;
-var changeMode = false;
+let playerMarkerNum = 1;
+let gunMarkerNum = 2;
 
-
-//create gun
+//create game elements
 var gun = new Gun(200, 200, 20, 10, 10, 0);
+var player = new PlayerController(100, 100, 20, 10, 0, false)
 const bullets = [];
 const enemies = [];
+const asteroids = [];
 const waypoints = Vec2[(50, 50), (50, 300), (400, 50), (400, 300)];
-
+for(let i = 0; i < 8; i++){
+  asteroids.push(new Asteroid(100, 100, Math.random() * 50));
+}
+//event listeners
 document.addEventListener("mousemove", mouseMoveHandler, false);
 document.addEventListener("keydown", keyDownHandler, false);
 
-
+//init
 let hasStarted = false;
 function init() {
 
@@ -32,7 +31,7 @@ function init() {
 
 
 function mouseMoveHandler(e) {
-  if (changeMode) {
+  if (player.mode) {
     var relativeX = e.clientX - canvas.offsetLeft;
     if (relativeX > 0 && relativeX < canvas.width) {
       gun.position.x = relativeX;
@@ -45,32 +44,18 @@ function mouseMoveHandler(e) {
   else {
     var relativeX = e.clientX - canvas.offsetLeft;
     if (relativeX > 0 && relativeX < canvas.width) {
-      playerX = relativeX;
+      player.position.x = relativeX;
     }
     var relativeY = e.clientY - canvas.offsetTop;
     if (relativeY > 0 && relativeY < canvas.height) {
-      playerY = relativeY;
+      player.position.y = relativeY;
     }
+    //console.log(player.position);
   }
-
-
-}
-
-function SpawnEnemy() {
-  enemies.push(
-    new Enemy(
-      150,
-      150,
-      20, //radius
-      10, //speed
-      0,
-      0
-      //Math.floor(Math.random() * waypoints.length)
-    )
-  );
 }
 
 function keyDownHandler(e) {
+  //rotate player and gun
   if (e.key == "d") {
     gun.rotate(0.2);
   }
@@ -78,11 +63,13 @@ function keyDownHandler(e) {
     gun.rotate(-0.2);
   }
   if (e.key == "l") {
-    playerRotation += 1;
+    player.rotate(0.2);
   }
   if (e.key == "j") {
-    playerRotation -= 1;
+    player.rotate(-0.2);
   }
+
+
   if (e.key == "g") {
     gun.shoot();
     //changeMode = !changeMode;
@@ -99,20 +86,18 @@ function keyDownHandler(e) {
 //   if()
 // }
 
-function drawEnemy() {
-  ctx.beginPath();
-  ctx.arc(enemyX, enemyY, enemyRadius, enemyRotation, Math.PI * 2 + enemyRotation, false);
-  ctx.fillStyle = "red";
-  ctx.fill();
-  ctx.closePath();
-}
-
-function drawPlayer() {
-  ctx.beginPath();
-  ctx.arc(playerX, playerY, playerRadius, playerRotation, Math.PI * 2 + playerRotation, false);
-  ctx.fillStyle = "green";
-  ctx.fill();
-  ctx.closePath();
+function SpawnEnemy() {
+  enemies.push(
+    new Enemy(
+      150,
+      150,
+      20, //radius
+      1, //speed
+      0,
+      0
+      //Math.floor(Math.random() * waypoints.length)
+    )
+  );
 }
 
 function drawShield() {
@@ -126,7 +111,7 @@ function drawShield() {
 
 function drawLine(){
   ctx.beginPath();
-  ctx.moveTo(playerX, playerY);
+  ctx.moveTo(player.position.x, player.position.y);
   ctx.lineTo(gun.position.x, gun.position.y);
   ctx.strokeStyle = "grey";
   ctx.lineWidth = 1;
@@ -136,17 +121,31 @@ function drawLine(){
 let prevTime = Date.now();
 
 function update() {
+
+  //checks if both markers are active
+// if(!Beholder.getMarker(playerMarkerNum).present ||
+//   !Beholder.getMarker(gunMarkerNum).present) {
+//    console.log("Player or gun not present") 
+//     return;
+//   }
+
+  //time stuff
   let currentTime = Date.now();
   let dt = currentTime - prevTime;
   prevTime = currentTime;
 
+  //beholder marker variables
   Beholder.update();
-  //console.log(Beholder.getMarker(0).center.x); // 194 - 268
+  let playerPosition = Beholder.getMarker(playerMarkerNum).center;
+  let playerRotation = Beholder.getMarker(playerMarkerNum).rotation;
+  let gunPosition = Beholder.getMarker(gunMarkerNum).center;
+  let gunRotation = Beholder.getMarker(gunMarkerNum).rotation;
+
+  //update for game elements
   gun.update();
-
-  enemies.forEach(e => e.move())
-
+  enemies.forEach(e => e.move(dt))
   bullets.forEach(b => b.update(dt));
+  asteroids.forEach(a => a.update(dt))
 
   // Filter out bullest
   for (let i = bullets.length - 1; i > -1; i--) {
@@ -161,12 +160,28 @@ function update() {
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawPlayer();
-  drawShield();
+  
+  let player1 = document.getElementById('player');
+  ctx.drawImage(player1, player.position.x - 30, player.position.y - 30, 60, 60);
+  //player.draw(ctx);
+  
+  //drawShield();
   drawLine();
   enemies.forEach(enemy => enemy.draw(ctx));
+  asteroids.forEach(asteroid => asteroid.draw(ctx))
   gun.draw(ctx);
   bullets.forEach(b => b.draw(ctx));
+}
+
+function CircleCollision(posX, posY, rad, posX2, posY2, rad2)
+{
+  let radiusSum = rad + rad2;
+  let xDiff = posX - posX2;
+  let yDiff = posY - posY2;
+
+  if(radiusSum > Math.sqrt((xDiff * xDiff) + (yDiff * yDiff))){
+    return true;
+  } else return false ;
 }
 
 
